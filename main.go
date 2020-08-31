@@ -36,4 +36,6 @@ func main() {
 
 	drawchat()
 
+	connection.Close()
+
 }
