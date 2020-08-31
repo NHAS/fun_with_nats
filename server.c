@@ -17,7 +17,7 @@ int main(int argc, char *argv[])
 
     if (argc != 2)
     {
-        printf("Need a remote IP bruh");
+        printf("Need a remote IP bruh\n");
         return -1;
     }
 
