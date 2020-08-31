@@ -19,7 +19,6 @@ int main(int argc, char *argv[])
     if (argc != 2)
     {
         printf("%s <remote_ip> ", argv[0]);
-        return -1;
     }
 
     int sockfd;
