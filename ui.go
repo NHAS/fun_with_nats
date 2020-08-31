@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"log"
+	"strings"
 
 	"github.com/jroimartin/gocui"
 )
@@ -104,13 +105,16 @@ func drawchat() {
 
 	incomingMessages := make(chan string)
 
-	go func() {
+	go func(c <-chan string) {
 		readData(incomingMessages)
 		for {
 			msg := <-incomingMessages
-			chatMessage <- "Them: " + msg
+			if !strings.Contains(msg, "|heartbeat|") {
+				chatMessage <- "Them: " + msg
+			}
+
 		}
-	}()
+	}(incomingMessages)
 
 	go func() {
 		for {

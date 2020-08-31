@@ -29,7 +29,7 @@ func main() {
 
 	remoteAddress := net.UDPAddr{IP: net.ParseIP(*raddr), Port: *port}
 
-	laddr, _ := net.ResolveUDPAddr("udp", ":"+fmt.Sprintf("%d", port))
+	laddr, _ := net.ResolveUDPAddr("udp", ":"+fmt.Sprintf("%d", *port))
 
 	err := newConnection(&remoteAddress, laddr)
 	check("Setting up connection failed", err)

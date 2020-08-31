@@ -16,18 +16,24 @@ func newConnection(remote *net.UDPAddr, local *net.UDPAddr) error {
 	if err != nil {
 		return err
 	}
-	defer c.Close()
+
+	log.Println("Listening on: ", c.LocalAddr().String())
 
 	fmt.Print("Starting connection")
 	i := 0
+	numRecieved := 0
 	for {
+		if numRecieved > 10 {
+			break
+		}
+
 		buf := make([]byte, 1024)
 
-		c.SetDeadline(time.Now().Add(100 * time.Millisecond))
+		c.SetDeadline(time.Now().Add(50 * time.Millisecond))
 		n, _, _ := c.ReadFromUDP(buf)
 		if n > 0 {
-			log.Println("Startup successful, got data")
-			break
+			log.Println(string(buf[0:n]))
+			numRecieved++
 		}
 		c.SetDeadline(time.Time{})
 
@@ -42,7 +48,7 @@ func newConnection(remote *net.UDPAddr, local *net.UDPAddr) error {
 	go func() {
 
 		for {
-			<-time.After(time.Millisecond * 200)
+			<-time.After(time.Millisecond * 100)
 			c.WriteToUDP([]byte("|heartbeat|"), remote)
 		}
 	}()
@@ -66,6 +72,7 @@ func readData(output chan<- string) {
 			if err != nil {
 				continue
 			}
+
 			output <- string(buf[0:n])
 		}
 	}()
