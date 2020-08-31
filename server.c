@@ -57,6 +57,8 @@ int main(int argc, char *argv[])
         perror("bind failed");
         exit(EXIT_FAILURE);
     }
+    
+    int connected = 0;
 
     while (1)
     {
@@ -87,6 +89,8 @@ int main(int argc, char *argv[])
 
             char *msg = "Recieved!";
             sendto(sockfd, (const char *)msg, strlen(msg), 0, (struct sockaddr *)&connected_client_addr, sizeof(connected_client_addr));
+            usleep(1000);
+            continue;
         }
 
         sendto(sockfd, "a", 1, 0, (struct sockaddr *)&target_addr, sizeof(target_addr)); // Small thing to just shoot udp at a target until something fun happens
