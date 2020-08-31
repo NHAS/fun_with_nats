@@ -1,22 +1,14 @@
 package main
 
 import (
-	"crypto/rand"
 	"fmt"
 	"log"
 	"net"
-	"strings"
 	"time"
 )
 
 var connection *net.UDPConn = nil
 var remoteAddress *net.UDPAddr = nil
-
-func tokenGenerator() string {
-	b := make([]byte, 5)
-	rand.Read(b)
-	return fmt.Sprintf("%x", b)
-}
 
 func newConnection(remote *net.UDPAddr, local *net.UDPAddr) error {
 
@@ -28,32 +20,27 @@ func newConnection(remote *net.UDPAddr, local *net.UDPAddr) error {
 	log.Println("Listening on: ", c.LocalAddr().String())
 
 	fmt.Print("Starting connection")
-
 	i := 0
-
-	ourToken := tokenGenerator()
-	currentToken := ourToken
+	numRecieved := 0
 	for {
+		if numRecieved > 10 {
+			break
+		}
 
-		c.WriteToUDP([]byte(currentToken), remote)
+		buf := make([]byte, 1024)
+
+		c.SetDeadline(time.Now().Add(50 * time.Millisecond))
+		n, _, _ := c.ReadFromUDP(buf)
+		if n > 0 {
+			log.Println(string(buf[0:n]))
+			numRecieved++
+		}
+		c.SetDeadline(time.Time{})
+
+		c.WriteToUDP([]byte("|heartbeat|"), remote)
 		if i%4 == 0 {
 			fmt.Print(".")
 		}
-
-		c.SetDeadline(time.Now().Add(50 * time.Millisecond))
-
-		buf := make([]byte, 1024)
-		n, _, _ := c.ReadFromUDP(buf)
-		if n > 0 {
-			if strings.Contains(string(buf[0:n]), ourToken) {
-				//They have recieved our communication which means their nat has a hole
-				break
-			}
-
-			currentToken = ourToken + string(buf[0:n])
-		}
-
-		c.SetDeadline(time.Time{})
 
 		i++
 	}
