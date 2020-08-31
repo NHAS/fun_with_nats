@@ -1,4 +1,3 @@
-// Server side implementation of UDP client-server model
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -7,6 +6,8 @@
 #include <sys/socket.h>
 #include <arpa/inet.h>
 #include <netinet/in.h>
+#include <sys/select.h>
+#include <sys/time.h>
 
 #define PORT 5580
 #define MAXLINE 1024
@@ -17,7 +18,7 @@ int main(int argc, char *argv[])
 
     if (argc != 2)
     {
-        printf("Need a remote IP bruh");
+        printf("%s <remote_ip> ", argv[0]);
         return -1;
     }
 
@@ -28,7 +29,6 @@ int main(int argc, char *argv[])
 
     struct timeval tv; // Set select to timeout
     bzero(&tv, sizeof(tv));
-    tv.tv_usec = 100000; // 100 milliseconds
 
     // Creating socket file descriptor
     if ((sockfd = socket(AF_INET, SOCK_DGRAM, 0)) < 0)
@@ -57,14 +57,20 @@ int main(int argc, char *argv[])
         perror("bind failed");
         exit(EXIT_FAILURE);
     }
-    
-    int connected = 0;
 
+    FD_ZERO(&read_fds);
+
+    int connected = 0;
     while (1)
     {
-        char buf[MAXLINE] = {0};
 
         FD_SET(sockfd, &read_fds);
+
+        tv.tv_usec = (connected) ? 200000 : 50000; // If we're not connected send packets every 50ms, otherwise heartbeat every 200ms
+
+        char buf[MAXLINE] = {0};
+        printf("yes\n");
+
         int n = select(sockfd + 1, &read_fds, NULL, 0, &tv);
         if (n < 0)
         {
@@ -72,7 +78,8 @@ int main(int argc, char *argv[])
             close(sockfd);
             exit(1);
         }
-        if (n != 0 && FD_ISSET(sockfd, &read_fds))
+
+        if (FD_ISSET(sockfd, &read_fds))
         {
 
             socklen_t len = sizeof(connected_client_addr);
@@ -90,13 +97,15 @@ int main(int argc, char *argv[])
             char *msg = "Recieved!";
             sendto(sockfd, (const char *)msg, strlen(msg), 0, (struct sockaddr *)&connected_client_addr, sizeof(connected_client_addr));
             usleep(100000);
-	    connected = 1;
+            connected = 1;
             continue;
         }
-	if(!connected) {
-        	sendto(sockfd, "a", 1, 0, (struct sockaddr *)&target_addr, sizeof(target_addr)); // Small thing to just shoot udp at a target until something fun happens
-   	} 
-   }
+
+        if (!connected)
+        {
+            sendto(sockfd, "heartbeat", 10, 0, (struct sockaddr *)&target_addr, sizeof(target_addr)); // Small thing to just shoot udp at a target until something fun happens
+        }
+    }
 
     return 0;
 }
