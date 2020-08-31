@@ -35,6 +35,7 @@ func newConnection(remote *net.UDPAddr, local *net.UDPAddr) error {
 	currentToken := ourToken
 	for {
 
+		c.SetDeadline(time.Time{})
 		c.WriteToUDP([]byte(currentToken), remote)
 		if i%4 == 0 {
 			fmt.Print(".")
@@ -47,15 +48,15 @@ func newConnection(remote *net.UDPAddr, local *net.UDPAddr) error {
 		if n > 0 {
 			if strings.Contains(string(buf[0:n]), ourToken) {
 				//They have recieved our communication which means their nat has a hole
-
+				log.Println("Punched! ", string(buf[0:n]))
+				c.SetDeadline(time.Time{})
+				c.WriteToUDP([]byte(currentToken), remote)
 				break
 			}
 
 			currentToken = ourToken + string(buf[0:n])
-
+			log.Println("current [", currentToken, "], recieved [", string(buf[0:n]), "] our [", ourToken, "]")
 		}
-
-		c.SetDeadline(time.Time{})
 
 		i++
 	}
