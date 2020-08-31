@@ -89,12 +89,14 @@ int main(int argc, char *argv[])
 
             char *msg = "Recieved!";
             sendto(sockfd, (const char *)msg, strlen(msg), 0, (struct sockaddr *)&connected_client_addr, sizeof(connected_client_addr));
-            usleep(1000);
+            usleep(100000);
+	    connected = 1;
             continue;
         }
-
-        sendto(sockfd, "a", 1, 0, (struct sockaddr *)&target_addr, sizeof(target_addr)); // Small thing to just shoot udp at a target until something fun happens
-    }
+	if(!connected) {
+        	sendto(sockfd, "a", 1, 0, (struct sockaddr *)&target_addr, sizeof(target_addr)); // Small thing to just shoot udp at a target until something fun happens
+   	} 
+   }
 
     return 0;
 }
