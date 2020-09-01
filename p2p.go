@@ -33,6 +33,7 @@ func newConnection(remote *net.UDPAddr, local *net.UDPAddr) error {
 
 	ourToken := tokenGenerator()
 	currentToken := ourToken
+
 	for {
 
 		c.SetDeadline(time.Time{})
@@ -54,7 +55,9 @@ func newConnection(remote *net.UDPAddr, local *net.UDPAddr) error {
 				break
 			}
 
-			currentToken = ourToken + string(buf[0:n])
+			if len(currentToken) != len(ourToken)*2 {
+				currentToken = ourToken + string(buf[0:n])
+			}
 			log.Println("current [", currentToken, "], recieved [", string(buf[0:n]), "] our [", ourToken, "]")
 		}
 
